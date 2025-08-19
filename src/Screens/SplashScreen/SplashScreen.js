@@ -4,7 +4,7 @@ import { View, Image, StyleSheet } from 'react-native';
 export const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('Login');
+      navigation.replace('LoginScreen');
     }, 3000);
     return () => clearTimeout(timer);
   }, [navigation]);
