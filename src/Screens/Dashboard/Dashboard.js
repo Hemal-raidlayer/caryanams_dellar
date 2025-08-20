@@ -12,11 +12,13 @@ import {
   Platform,
   UIManager,
   LayoutAnimation,
+  Button,
 } from 'react-native';
 import colors from '../../Utils/colors';
 import fonts from '../../Utils/fonts';
 import image from '../../Utils/images';
 import { Dropdown } from 'react-native-element-dropdown';
+import DatePicker from 'react-native-date-picker';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android') {
@@ -26,6 +28,15 @@ if (Platform.OS === 'android') {
 
 const Dashboard = () => {
   const [openIndex, setOpenIndex] = useState(null);
+
+  const [insuranceStartDate, setInsuranceStartDate] = useState(null);
+  const [insuranceEndDate, setInsuranceEndDate] = useState(null);
+
+  const [openStart, setOpenStart] = useState(false);
+  const [openEnd, setOpenEnd] = useState(false);
+
+  const [lastServiceDate, setLastServiceDate] = useState(null);
+  const [openService, setOpenService] = useState(false);
 
   // Dummy data for dropdowns
   const dummyOptions = [
@@ -113,6 +124,7 @@ const Dashboard = () => {
             </View>
           )}
         </View>
+        {/*  Photo Section Over */}
 
         {/* Details Section */}
         <View style={styles.accordionContainer}>
@@ -160,15 +172,153 @@ const Dashboard = () => {
                 valueField="value"
                 placeholder="Select Year"
               />
-
-              <TextInput style={styles.input} placeholder="KM Driven" />
-              <TextInput style={styles.input} placeholder="Ad Title" />
-              <TextInput
-                style={[styles.input, { height: 80 }]}
-                placeholder="Description"
-                multiline
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Fuel"
               />
-              <TextInput style={styles.input} placeholder="Price" />
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Transmission "
+              />
+               <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Owner  "
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Kilometer"
+                placeholderTextColor={colors.black}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Car Number"
+                placeholderTextColor={colors.black}
+              />
+
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Insurance"
+              />
+
+              {/* Insurance start Date */}
+              <View style={{ marginTop: 10, width: '100%' }}>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setOpenStart(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text>
+                    {insuranceStartDate
+                      ? insuranceStartDate.toDateString()
+                      : 'Select Start Date'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <DatePicker
+                modal
+                open={openStart}
+                date={insuranceStartDate || new Date()}
+                mode="date"
+                onConfirm={selectedDate => {
+                  setOpenStart(false);
+                  setInsuranceStartDate(selectedDate);
+                }}
+                onCancel={() => setOpenStart(false)}
+              />
+
+              {/* Insurance End Date */}
+              <View style={{ marginTop: 10, width: '100%' }}>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setOpenEnd(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text>
+                    {insuranceEndDate
+                      ? insuranceEndDate.toDateString()
+                      : 'Select End Date'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <DatePicker
+                modal
+                open={openEnd}
+                date={insuranceEndDate || new Date()}
+                mode="date"
+                onConfirm={selectedDate => {
+                  setOpenEnd(false);
+                  setInsuranceEndDate(selectedDate);
+                }}
+                onCancel={() => setOpenEnd(false)}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Chassis Number"
+                placeholderTextColor={colors.black}
+              />
+
+              {/*  Last Service Date */}
+              <View style={{ marginTop: 10, width: '100%' }}>
+                <TouchableOpacity
+                  style={styles.input}
+                  onPress={() => setOpenService(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text>
+                    {lastServiceDate
+                      ? lastServiceDate.toDateString()
+                      : 'Select Last Service Date'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <DatePicker
+                modal
+                open={openService}
+                date={lastServiceDate || new Date()}
+                mode="date"
+                onConfirm={selectedDate => {
+                  setOpenService(false);
+                  setLastServiceDate(selectedDate);
+                }}
+                onCancel={() => setOpenService(false)}
+              />
+
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Accidental"
+              />
+
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Duplicate key"
+              />
+              <TextInput
+                style={[styles.input, { paddingVertical: 40 }]}
+                placeholder="Description"
+                placeholderTextColor={colors.black}
+              />
 
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
                 <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
@@ -183,6 +333,7 @@ const Dashboard = () => {
             </View>
           )}
         </View>
+        {/* Details Section Over */}
 
         {/* Location Section */}
         <View style={styles.accordionContainer}>
@@ -216,6 +367,20 @@ const Dashboard = () => {
                 valueField="value"
                 placeholder="Select City"
               />
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Area"
+              />
+              <Dropdown
+                style={styles.dropdown}
+                data={dummyOptions}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Rto"
+              />
 
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
                 <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
@@ -230,6 +395,7 @@ const Dashboard = () => {
             </View>
           )}
         </View>
+        {/* Location Section Over */}
 
         {/* Review Details Section */}
         <View style={styles.accordionContainer}>
@@ -280,6 +446,7 @@ const Dashboard = () => {
             </View>
           )}
         </View>
+        {/* Review Details Section over */}
       </ScrollView>
     </View>
   );
@@ -328,6 +495,7 @@ const styles = StyleSheet.create({
   accordionTitle: {
     fontSize: 16,
     fontFamily: fonts.bold,
+    
   },
   accordionContent: {
     padding: 15,
@@ -339,7 +507,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semibold,
   },
   photoItem: {
     width: 70,

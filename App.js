@@ -11,7 +11,7 @@ const Stack = createStackNavigator();
 const  App =()=> {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName='SplashScreen' screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName='Dashboard' screenOptions={{ headerShown: false }}>
         <Stack.Screen name="SplashScreen" component={SplashScreen} />
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="Dashboard" component={Dashboard} />

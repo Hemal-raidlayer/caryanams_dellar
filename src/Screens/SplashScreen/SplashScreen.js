@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
+import image from '../../Utils/images';
 
 export const SplashScreen = ({ navigation }) => {
   useEffect(() => {
@@ -12,7 +13,7 @@ export const SplashScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: 'https://reactnative.dev/img/tiny_logo.png' }}
+        source={image.applogo}
         style={styles.logo}
       />
     </View>
@@ -29,8 +30,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 200,
+    height: 200,
     resizeMode: 'contain',
   },
 });
