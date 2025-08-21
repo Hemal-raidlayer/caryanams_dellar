@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://crmapi.conscor.com/api/v2';
+const BASE_URL = 'https://crmapi.conscor.com/api/';
 
 const api = axios.create({
   baseURL: BASE_URL,

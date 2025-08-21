@@ -13,12 +13,17 @@ import {
   UIManager,
   LayoutAnimation,
   Button,
+  Alert,
+  PermissionsAndroid,
+  Modal,
 } from 'react-native';
 import colors from '../../Utils/colors';
 import fonts from '../../Utils/fonts';
 import image from '../../Utils/images';
 import { Dropdown } from 'react-native-element-dropdown';
 import DatePicker from 'react-native-date-picker';
+import ImagePicker from 'react-native-image-crop-picker';
+import OptionSelector from '../../Component/OptionSelector';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android') {
@@ -29,14 +34,45 @@ if (Platform.OS === 'android') {
 const Dashboard = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
-  const [insuranceStartDate, setInsuranceStartDate] = useState(null);
-  const [insuranceEndDate, setInsuranceEndDate] = useState(null);
-
   const [openStart, setOpenStart] = useState(false);
   const [openEnd, setOpenEnd] = useState(false);
 
-  const [lastServiceDate, setLastServiceDate] = useState(null);
   const [openService, setOpenService] = useState(false);
+
+  const [dummyPhotos, setDummyPhotos] = useState([]);
+  const [showPicker, setShowPicker] = useState(false);
+
+  const [AllPhotod, setsetAllPhotod] = useState([]);
+  const [showFrontPicker, setShowFrontPicker] = useState(false);
+
+  // Details
+  const [Brand, setBrand] = useState(null);
+  const [CarModal, setCarModal] = useState(null);
+  const [Variant, setVarient] = useState(null);
+  const [Year, setYear] = useState(null);
+  const [Fuel, setFuel] = useState();
+  const [Transmission, setTransmission] = useState();
+  const [Owner, setOwner] = useState();
+  const [KmDrive, setKmDrive] = useState();
+  const [CarNumber, setCarNumber] = useState();
+  const [Insurance, setInsurance] = useState();
+  const [insuranceStartDate, setInsuranceStartDate] = useState(null);
+  const [insuranceEndDate, setInsuranceEndDate] = useState(null);
+  const [ChassicNumber, setChassicNumber] = useState(null);
+  const [lastServiceDate, setLastServiceDate] = useState(null);
+  const [Accidental, setAccidental] = useState(null);
+  const [Key, setKey] = useState();
+  const [Description, setDescription] = useState();
+
+  // Location section
+  const [State, setState] = useState(false);
+  const [City, setCity] = useState(false);
+  const [Area, setArea] = useState(false);
+  const [Rto, setRto] = useState(false);
+
+  // Review Details
+  const [Name, setName] = useState(false);
+  const [Mobile, setMobile] = useState(false);
 
   // Dummy data for dropdowns
   const dummyOptions = [
@@ -44,10 +80,40 @@ const Dashboard = () => {
     { label: 'Option 2', value: '2' },
   ];
 
-  // Dummy photos
-  const dummyPhotos = [
-    'https://via.placeholder.com/150',
-    'https://via.placeholder.com/160',
+  // Dummy data for transmission
+  const transmissionOptions = [
+    { label: 'Manual', value: 'manual' },
+    { label: 'Automatic', value: 'automatic' },
+  ];
+
+  // Dummy data for fuels
+  const fuels = [
+    { label: 'CNG & Hybrids', value: 'cng' },
+    { label: 'Diesel', value: 'diesel' },
+    { label: 'Electric', value: 'electric' },
+    { label: 'LPG', value: 'lpg' },
+    { label: 'Petrol', value: 'petrol' },
+  ];
+
+  // Dummy data for Owner
+  const OwnerList = [
+    { label: '1st', value: '1st' },
+    { label: '2nd', value: '2nd' },
+    { label: '3rd', value: '3rd' },
+    { label: '4th', value: '4th' },
+    { label: '4+', value: '4+' },
+  ];
+
+  // Dummy data for Insurance
+  const InsuranceList = [
+    { label: 'Yes', value: 'yes' },
+    { label: 'No', value: 'no' },
+  ];
+
+  // Dummy data for Key
+  const KeyList = [
+    { label: 'Yes', value: 'yes' },
+    { label: 'No', value: 'no' },
   ];
 
   // Accordion toggle
@@ -56,11 +122,79 @@ const Dashboard = () => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-  // Render uploaded photos (dummy)
+  const handleSubmit = () => {
+    // Array of all mandatory fields
+    const fields = [
+      { value: Brand, label: 'Brand' },
+      { value: Modal, label: 'Model' },
+      { value: Variant, label: 'Variant' },
+      { value: Year, label: 'Year' },
+      { value: Fuel, label: 'Fuel' },
+      { value: Transmission, label: 'Transmission' },
+      { value: Owner, label: 'Owner' },
+      { value: KmDrive, label: 'Kilometer' },
+      { value: CarNumber, label: 'Car Number' },
+      { value: Description, label: 'Description' },
+    ];
+
+    // Loop through fields and check if empty
+    for (let field of fields) {
+      if (
+        !field.value || // null/undefined
+        (typeof field.value === 'string' && !field.value.trim()) // empty string
+      ) {
+        Alert.alert('Wrong', `Please enter/select Mandatory (*)} Field!`);
+        return;
+      }
+    }
+
+    // All fields are require
+    Alert.alert('Success', 'Form submitted successfully!');
+    console.log(
+      'Brand >>',
+      Brand,
+      'Modal >>',
+      Modal,
+      'Varient >>',
+      Variant,
+      'Year >>',
+      Year,
+      'Fuel >>',
+      Fuel,
+      'Transmission >>',
+      Transmission,
+      'KmDrive >>',
+      KmDrive,
+      'Insurance >>',
+      Insurance,
+      'insuranceStartDate >>',
+      insuranceStartDate.toDateString(),
+      'insuranceEndDate >>',
+      insuranceEndDate.toDateString(),
+      'ChassicNumber >>',
+      ChassicNumber,
+      'lastServiceDate >>',
+      lastServiceDate.toDateString(),
+      'Accidental >>',
+      Accidental,
+      'Key >>',
+      Key,
+      'Description >>',
+      Description,
+    );
+  };
+
   const renderPhotoBox = ({ item }) => (
     <View style={styles.photoItem}>
-      <Image source={{ uri: item }} style={styles.photoImage} />
-      <TouchableOpacity style={styles.removeBtn}>
+      <Image source={{ uri: item.uri }} style={styles.photoImage} />
+      <TouchableOpacity
+        style={styles.removeBtn}
+        onPress={() => {
+          // Remove photo on press
+          setDummyPhotos(prev => prev.filter(photo => photo.id !== item.id));
+          setsetAllPhotod(prev => prev.filter(photo => photo.id !== item.id));
+        }}
+      >
         <Text style={{ color: '#fff', fontSize: 12 }}>X</Text>
       </TouchableOpacity>
     </View>
@@ -77,31 +211,37 @@ const Dashboard = () => {
         showsVerticalScrollIndicator={false}
         style={{ paddingHorizontal: 12, marginTop: 12 }}
       >
-        {/* Photos Section */}
+        {/* font photo section */}
         <View style={styles.accordionContainer}>
           <TouchableOpacity
             style={[
               styles.accordionHeader,
-              openIndex === 0 && styles.activeHeader,
+              openIndex === 1 && styles.activeHeader,
             ]}
-            onPress={() => toggleAccordion(0)}
+            onPress={() => toggleAccordion(1)}
           >
-            <Text style={styles.accordionTitle}>Upload Photos</Text>
+            <Text style={styles.accordionTitle}>Front Photo</Text>
             <Image
-              source={openIndex === 0 ? image.down : image.up_arrow}
+              source={openIndex === 1 ? image.down : image.up_arrow}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
-          {openIndex === 0 && (
+
+          {openIndex === 1 && (
             <View style={styles.accordionContent}>
               <FlatList
-                data={dummyPhotos}
+                data={AllPhotod}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={renderPhotoBox}
                 numColumns={4}
+                scrollEnabled={false}
+                nestedScrollEnabled={true}
                 ListFooterComponent={
-                  <TouchableOpacity style={styles.addPhotoBox}>
+                  <TouchableOpacity
+                    style={styles.addPhotoBox}
+                    onPress={() => setShowFrontPicker(true)} // open bottom sheet
+                  >
                     <Image
                       source={image.camera_1}
                       style={{ height: 30, width: 30 }}
@@ -111,6 +251,263 @@ const Dashboard = () => {
                   </TouchableOpacity>
                 }
               />
+
+              {/* Bottom Sheet for Camera / Gallery */}
+              <Modal
+                transparent
+                visible={showFrontPicker}
+                animationType="slide"
+                onRequestClose={() => setShowFrontPicker(false)}
+              >
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  activeOpacity={1}
+                  onPressOut={() => setShowFrontPicker(false)}
+                >
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Choose Option</Text>
+
+                    {/* Camera Option */}
+                    <TouchableOpacity
+                      style={styles.modalBtn}
+                      onPress={async () => {
+                        try {
+                          const granted = await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS.CAMERA,
+                            {
+                              title: 'Camera Permission',
+                              message: 'App needs access to your camera',
+                              buttonPositive: 'OK',
+                            },
+                          );
+                          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                            const image = await ImagePicker.openCamera({
+                              width: 300,
+                              height: 300,
+                              cropping: false,
+                              mediaType: 'photo', // ✅ only photo
+                            });
+                            const newPhoto = {
+                              id: Date.now().toString(),
+                              uri: image.path,
+                            };
+                            setsetAllPhotod([...AllPhotod, newPhoto]);
+                            setShowFrontPicker(false);
+                          }
+                        } catch (error) {
+                          console.log('Camera error:', error);
+                        }
+                      }}
+                    >
+                      <Text style={styles.modalBtnText}>📷 Camera</Text>
+                    </TouchableOpacity>
+
+                    {/* Gallery Option */}
+                    <TouchableOpacity
+                      style={styles.modalBtn}
+                      onPress={async () => {
+                        try {
+                          const granted = await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS
+                              .READ_EXTERNAL_STORAGE,
+                            {
+                              title: 'Storage Permission',
+                              message: 'App needs access to your gallery',
+                              buttonPositive: 'OK',
+                            },
+                          );
+                          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                            const image = await ImagePicker.openPicker({
+                              width: 300,
+                              height: 300,
+                              cropping: false,
+                              mediaType: 'photo', // ✅ only photo
+                            });
+                            const newPhoto = {
+                              id: Date.now().toString(),
+                              uri: image.path,
+                            };
+                            setsetAllPhotod([...AllPhotod, newPhoto]);
+                            setShowFrontPicker(false);
+                          }
+                        } catch (error) {
+                          console.log('Gallery error:', error);
+                        }
+                      }}
+                    >
+                      <Text style={styles.modalBtnText}>🖼️ Gallery</Text>
+                    </TouchableOpacity>
+
+                    {/* Cancel */}
+                    <TouchableOpacity
+                      style={[styles.modalBtn, { backgroundColor: '#ddd' }]}
+                      onPress={() => setShowFrontPicker(false)}
+                    >
+                      <Text style={[styles.modalBtnText, { color: '#000' }]}>
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
+
+              {/* Next Button */}
+              <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
+                <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
+                  <Text style={styles.text_Next}>Next</Text>
+                  <Image
+                    source={image.right}
+                    style={{ height: 18, width: 18 }}
+                    tintColor={colors.white}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+        {/*  Front Photo Section Over */}
+
+        {/* Photos Section */}
+        <View style={styles.accordionContainer}>
+          <TouchableOpacity
+            style={[
+              styles.accordionHeader,
+              openIndex === 0 && styles.activeHeader,
+            ]}
+            onPress={() => toggleAccordion(0)}
+          >
+            <Text style={styles.accordionTitle}>All Photos</Text>
+            <Image
+              source={openIndex === 0 ? image.down : image.up_arrow}
+              style={{ height: 18, width: 18 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+
+          {openIndex === 0 && (
+            <View style={styles.accordionContent}>
+              <FlatList
+                data={dummyPhotos}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={renderPhotoBox}
+                numColumns={4}
+                scrollEnabled={false}
+                nestedScrollEnabled={true}
+                ListFooterComponent={
+                  <TouchableOpacity
+                    style={styles.addPhotoBox}
+                    onPress={() => setShowPicker(true)} // open bottom sheet
+                  >
+                    <Image
+                      source={image.camera_1}
+                      style={{ height: 30, width: 30 }}
+                      tintColor={colors.primary}
+                    />
+                    <Text style={styles.addPhotoText}>Add Photo</Text>
+                  </TouchableOpacity>
+                }
+              />
+
+              {/* Bottom Sheet for Camera / Gallery */}
+              <Modal
+                transparent
+                visible={showPicker}
+                animationType="slide"
+                onRequestClose={() => setShowPicker(false)}
+              >
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  activeOpacity={1}
+                  onPressOut={() => setShowPicker(false)}
+                >
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Choose Option</Text>
+
+                    {/* Camera Option */}
+                    <TouchableOpacity
+                      style={styles.modalBtn}
+                      onPress={async () => {
+                        try {
+                          const granted = await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS.CAMERA,
+                            {
+                              title: 'Camera Permission',
+                              message: 'App needs access to your camera',
+                              buttonPositive: 'OK',
+                            },
+                          );
+                          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                            const image = await ImagePicker.openCamera({
+                              width: 300,
+                              height: 300,
+                              cropping: false,
+                              mediaType: 'photo', // ✅ only photo
+                            });
+                            const newPhoto = {
+                              id: Date.now().toString(),
+                              uri: image.path,
+                            };
+                            setDummyPhotos([...dummyPhotos, newPhoto]);
+                            setShowPicker(false);
+                          }
+                        } catch (error) {
+                          console.log('Camera error:', error);
+                        }
+                      }}
+                    >
+                      <Text style={styles.modalBtnText}>📷 Camera</Text>
+                    </TouchableOpacity>
+
+                    {/* Gallery Option */}
+                    <TouchableOpacity
+                      style={styles.modalBtn}
+                      onPress={async () => {
+                        try {
+                          const granted = await PermissionsAndroid.request(
+                            PermissionsAndroid.PERMISSIONS
+                              .READ_EXTERNAL_STORAGE,
+                            {
+                              title: 'Storage Permission',
+                              message: 'App needs access to your gallery',
+                              buttonPositive: 'OK',
+                            },
+                          );
+                          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                            const image = await ImagePicker.openPicker({
+                              width: 300,
+                              height: 300,
+                              cropping: false,
+                              mediaType: 'photo', // ✅ only photo
+                            });
+                            const newPhoto = {
+                              id: Date.now().toString(),
+                              uri: image.path,
+                            };
+                            setDummyPhotos([...dummyPhotos, newPhoto]);
+                            setShowPicker(false);
+                          }
+                        } catch (error) {
+                          console.log('Gallery error:', error);
+                        }
+                      }}
+                    >
+                      <Text style={styles.modalBtnText}>🖼️ Gallery</Text>
+                    </TouchableOpacity>
+
+                    {/* Cancel */}
+                    <TouchableOpacity
+                      style={[styles.modalBtn, { backgroundColor: '#ddd' }]}
+                      onPress={() => setShowPicker(false)}
+                    >
+                      <Text style={[styles.modalBtnText, { color: '#000' }]}>
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
+
+              {/* Next Button */}
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
                 <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
                   <Text style={styles.text_Next}>Next</Text>
@@ -144,86 +541,176 @@ const Dashboard = () => {
           </TouchableOpacity>
           {openIndex === 1 && (
             <View style={styles.accordionContent}>
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Brand"
-              />
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Model"
-              />
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Variant"
-              />
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Year"
-              />
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Fuel"
-              />
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Transmission "
-              />
-               <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Owner  "
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Kilometer"
-                placeholderTextColor={colors.black}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Car Number"
-                placeholderTextColor={colors.black}
-              />
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  data={dummyOptions}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Brand"
+                  value={Brand}
+                  onChange={value => {
+                    setBrand(value);
+                    console.log('Selected Brand', value);
+                  }}
+                />
+              </View>
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  data={dummyOptions}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Model"
+                  value={CarModal}
+                  onChange={value => {
+                    setCarModal(value);
+                    console.log('Selected Car model', value);
+                  }}
+                />
+              </View>
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  data={dummyOptions}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Variant"
+                  value={Variant}
+                  onChange={value => {
+                    setVarient(value);
+                    console.log('Selected Variant', value);
+                  }}
+                />
+              </View>
 
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Insurance"
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  data={dummyOptions}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Year"
+                  value={Year}
+                  onChange={value => {
+                    setYear(value);
+                    console.log('Selected Year', value);
+                  }}
+                />
+              </View>
+
+              {/* Fuel */}
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <OptionSelector
+                  title="Fuel"
+                  options={fuels}
+                  multiSelect={false}
+                  onSelect={value => {
+                    setFuel(value);
+                    console.log('Selected Fuel:', value);
+                  }}
+                />
+              </View>
+
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <OptionSelector
+                  title="Transmission"
+                  options={transmissionOptions}
+                  multiSelect={false}
+                  onSelect={value => {
+                    setTransmission(value);
+                    console.log('Selected Transmission:', value);
+                  }}
+                />
+              </View>
+
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <OptionSelector
+                  title="No. Of Owner"
+                  options={OwnerList}
+                  multiSelect={false}
+                  onSelect={value => {
+                    setOwner(value);
+                    console.log('Selected No Of Owner:', value);
+                  }}
+                />
+              </View>
+
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="KM Driven"
+                  placeholderTextColor={colors.black}
+                  value={KmDrive}
+                  onChangeText={value => {
+                    setKmDrive(value);
+                    console.log('Selected Km Driven', value);
+                  }}
+                />
+              </View>
+
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Car Number"
+                  placeholderTextColor={colors.black}
+                  value={CarNumber}
+                  onChangeText={value => {
+                    setCarNumber(value);
+                    console.log('Selected Car Number', value);
+                  }}
+                />
+              </View>
+
+              <OptionSelector
+                title="Insurance"
+                options={InsuranceList}
+                multiSelect={false}
+                onSelect={value => {
+                  setInsurance(value);
+                  console.log('Selected Insurance:', value);
+                }}
               />
 
               {/* Insurance start Date */}
-              <View style={{ marginTop: 10, width: '100%' }}>
+              <View
+                style={{
+                  marginTop: 10,
+                  width: '100%',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <TouchableOpacity
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    },
+                  ]}
                   onPress={() => setOpenStart(true)}
                   activeOpacity={0.7}
                 >
                   <Text>
                     {insuranceStartDate
                       ? insuranceStartDate.toDateString()
-                      : 'Select Start Date'}
+                      : 'Select Insurance Start Date'}
                   </Text>
+                  <Image
+                    source={image.down}
+                    style={{ height: 18, width: 18 }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -235,6 +722,10 @@ const Dashboard = () => {
                 onConfirm={selectedDate => {
                   setOpenStart(false);
                   setInsuranceStartDate(selectedDate);
+                  console.log(
+                    'Selected Insurance Start Date:',
+                    selectedDate.toDateString(),
+                  );
                 }}
                 onCancel={() => setOpenStart(false)}
               />
@@ -242,15 +733,27 @@ const Dashboard = () => {
               {/* Insurance End Date */}
               <View style={{ marginTop: 10, width: '100%' }}>
                 <TouchableOpacity
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    },
+                  ]}
                   onPress={() => setOpenEnd(true)}
                   activeOpacity={0.7}
                 >
                   <Text>
                     {insuranceEndDate
                       ? insuranceEndDate.toDateString()
-                      : 'Select End Date'}
+                      : 'Select Insurance End Date'}
                   </Text>
+                  <Image
+                    source={image.down}
+                    style={{ height: 18, width: 18 }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -262,6 +765,10 @@ const Dashboard = () => {
                 onConfirm={selectedDate => {
                   setOpenEnd(false);
                   setInsuranceEndDate(selectedDate);
+                  console.log(
+                    'Selected Insurance End Date:',
+                    selectedDate.toDateString(),
+                  ); // ✅ log date
                 }}
                 onCancel={() => setOpenEnd(false)}
               />
@@ -270,12 +777,24 @@ const Dashboard = () => {
                 style={styles.input}
                 placeholder="Chassis Number"
                 placeholderTextColor={colors.black}
+                value={ChassicNumber}
+                onChangeText={value => {
+                  setChassicNumber(value);
+                  console.log('Selected Chassis Number', value);
+                }}
               />
 
               {/*  Last Service Date */}
               <View style={{ marginTop: 10, width: '100%' }}>
                 <TouchableOpacity
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    },
+                  ]}
                   onPress={() => setOpenService(true)}
                   activeOpacity={0.7}
                 >
@@ -284,6 +803,11 @@ const Dashboard = () => {
                       ? lastServiceDate.toDateString()
                       : 'Select Last Service Date'}
                   </Text>
+                  <Image
+                    source={image.down}
+                    style={{ height: 18, width: 18 }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -295,6 +819,10 @@ const Dashboard = () => {
                 onConfirm={selectedDate => {
                   setOpenService(false);
                   setLastServiceDate(selectedDate);
+                  console.log(
+                    'Selected Last Services Date:',
+                    selectedDate.toDateString(),
+                  ); // ✅ log date
                 }}
                 onCancel={() => setOpenService(false)}
               />
@@ -305,23 +833,51 @@ const Dashboard = () => {
                 labelField="label"
                 valueField="value"
                 placeholder="Accidental"
+                value={Accidental}
+                onChange={value => {
+                  setAccidental(value);
+                  console.log('selected Accidental Data', value);
+                }}
               />
 
-              <Dropdown
-                style={styles.dropdown}
-                data={dummyOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Duplicate key"
+              <OptionSelector
+                title="Dublicate Key"
+                options={KeyList}
+                multiSelect={false}
+                onSelect={value => {
+                  setKey(value);
+                  console.log('Selected Dublicate Key:', value);
+                }}
               />
-              <TextInput
-                style={[styles.input, { paddingVertical: 40 }]}
-                placeholder="Description"
-                placeholderTextColor={colors.black}
-              />
+
+              <View>
+                <Text style={{ color: 'red' }}>*</Text>
+
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      paddingVertical: 10,
+                      height: 100,
+                      textAlignVertical: 'top',
+                    },
+                  ]}
+                  placeholder="Description"
+                  placeholderTextColor={colors.black}
+                  value={Description}
+                  onChangeText={value => {
+                    setDescription(value);
+                    console.log('Description >>', value);
+                  }}
+                />
+              </View>
 
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
-                <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  style={styles.nextbtn}
+                  onPress={handleSubmit}
+                >
                   <Text style={styles.text_Next}>Next</Text>
                   <Image
                     source={image.right}
@@ -359,6 +915,11 @@ const Dashboard = () => {
                 labelField="label"
                 valueField="value"
                 placeholder="Select State"
+                value={State}
+                onChange={value => {
+                  setState(value);
+                  console.log('Selected State >>>>', value);
+                }}
               />
               <Dropdown
                 style={styles.dropdown}
@@ -366,6 +927,11 @@ const Dashboard = () => {
                 labelField="label"
                 valueField="value"
                 placeholder="Select City"
+                value={City}
+                onChange={value => {
+                  setCity(value);
+                  console.log('Selected City >>>>', value);
+                }}
               />
               <Dropdown
                 style={styles.dropdown}
@@ -373,6 +939,11 @@ const Dashboard = () => {
                 labelField="label"
                 valueField="value"
                 placeholder="Select Area"
+                value={Area}
+                onChange={value => {
+                  setArea(value);
+                  console.log('Selected Area >>>>', value);
+                }}
               />
               <Dropdown
                 style={styles.dropdown}
@@ -380,6 +951,11 @@ const Dashboard = () => {
                 labelField="label"
                 valueField="value"
                 placeholder="Select Rto"
+                value={Rto}
+                onChange={value => {
+                  setRto(value);
+                  console.log('Selected Rto >>>>', value);
+                }}
               />
 
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
@@ -425,12 +1001,22 @@ const Dashboard = () => {
                 <TextInput
                   style={[styles.input, { flex: 1, marginLeft: 10 }]}
                   placeholder="Name"
+                  value={Name}
+                  onChangeText={value => {
+                    setName(value);
+                    console.log('Selected Name >>>>', value);
+                  }}
                 />
               </View>
               <TextInput
                 style={[styles.input, { marginTop: 10 }]}
                 placeholder="Mobile Phone Number"
                 keyboardType="phone-pad"
+                value={Mobile}
+                onChangeText={value => {
+                  setMobile(value);
+                  console.log('Selected Number >>>>', value);
+                }}
               />
 
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
@@ -495,10 +1081,10 @@ const styles = StyleSheet.create({
   accordionTitle: {
     fontSize: 16,
     fontFamily: fonts.bold,
-    
   },
   accordionContent: {
-    padding: 15,
+    // padding: 15,
+    paddingHorizontal: 15,
     backgroundColor: colors.white,
   },
   input: {
@@ -507,7 +1093,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.light,
   },
   photoItem: {
     width: 70,
@@ -580,5 +1166,71 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     color: colors.white,
     fontSize: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalBtn: {
+    padding: 15,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    marginVertical: 5,
+    alignItems: 'center',
+  },
+  modalBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  title: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 10,
+    textDecorationLine: 'underline',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 2,
+  },
+  option: {
+    borderWidth: 1.5,
+    borderColor: '#6A5AE0',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    margin: 5,
+  },
+  optionText: {
+    color: '#6A5AE0',
+    fontSize: 14,
+  },
+  selectedOption: {
+    backgroundColor: '#6A5AE0',
+  },
+  selectedText: {
+    color: '#fff',
+  },
+  disabledOption: {
+    borderColor: '#ccc',
+    backgroundColor: '#f2f2f2',
+  },
+  disabledText: {
+    color: '#ccc',
   },
 });
