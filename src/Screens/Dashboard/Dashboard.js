@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -24,45 +24,323 @@ import { Dropdown } from 'react-native-element-dropdown';
 import DatePicker from 'react-native-date-picker';
 import ImagePicker from 'react-native-image-crop-picker';
 import OptionSelector from '../../Component/OptionSelector';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../../../api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 // Enable LayoutAnimation on Android
-if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental &&
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+// if (Platform.OS === 'android') {
+//   UIManager.setLayoutAnimationEnabledExperimental &&
+//     UIManager.setLayoutAnimationEnabledExperimental(true);
+// }
 
 const Dashboard = () => {
-  const [openIndex, setOpenIndex] = useState(null);
 
+  // Details submit Api  Start
+  const apiData = async ({}) => {
+    try {
+      const payload = {
+        appName: 'app5347583724521',
+        collectionToSubmit: 'usecar',
+        sectionName: 'usecar',
+        sectionData: {
+          Brand: Brand?.value,
+          Modal: CarModal?.value,
+          Variant: Variant?.value,
+          Year: Year?.value,
+          Fuel: Fuel,
+          Transmission: Transmission,
+          Owner: Owner,
+          KmDrive: KmDrive,
+          CarNumber: CarNumber,
+          Insurance: Insurance,
+          insuranceStartDate: insuranceStartDate,
+          insuranceEndDate: insuranceEndDate,
+          ChassicNumber: ChassicNumber,
+          lastServiceDate: lastServiceDate,
+          Accidental: Accidental?.value,
+          Key: Key,
+          Description: Description,
+        },
+      };
+
+      console.log(
+        ' Submitted Values:',
+        JSON.stringify(payload.sectionData, null, 2),
+      );
+
+      console.log(' Full Payload:', JSON.stringify(payload, null, 2));
+
+      const response = await api.post('v1/dynamic/submitData', payload);
+      console.log('API Success:', response);
+      console.log({
+        Brand,
+        CarModal,
+        Variant,
+        Year,
+        Fuel,
+        Transmission,
+        Owner,
+        KmDrive,
+        CarNumber,
+        Insurance,
+        insuranceStartDate,
+        insuranceEndDate,
+        ChassicNumber,
+        lastServiceDate,
+        Accidental,
+        Key,
+        Description,
+      });
+      return response;
+    } catch (error) {
+      console.log('API Error:', error);
+      throw error;
+    }
+  };
+// Details Submit Api  Over
+
+
+// Detpails Field Api  Start
+const Payload = {
+  lookups: [
+    {
+      db: "caryanams",
+      data: [
+        {
+          table: "newbrand",
+          query: {},
+          projection: {
+            _id: 0,
+            brandId: "$_id",
+            brandname: "$sectionData.newBrand.brandname",
+            url: "$sectionData.newBrand.url",
+            modelCount: "$sectionData.newBrand.modelCount"
+          },
+          label: "BrandList",
+          type: "array",
+          lookup: []
+        },
+        {
+          table: "model",
+          query: {},
+          projection: {
+            _id: 0,
+            modelId: "$_id",
+            name: "$sectionData.model.name",
+            companyId: "$sectionData.model.companyId"
+          },
+          label: "modelList",
+          type: "array",
+          lookup: []
+        },
+        {
+          table: "variant",
+          query: {},
+          projection: {
+            _id: 0,
+            variantId: "$_id",
+            variantname: "$sectionData.variant.name",
+            model: "$sectionData.variant.model",
+            modelname: { $arrayElemAt: ["$modelDetails.sectionData.model.name", 0] },
+            brandid: "$sectionData.variant.brandname"
+          },
+          label: "variantList",
+          type: "array",
+          lookup: [
+            {
+              from: "model",
+              localField: "sectionData.variant.model",
+              foreignField: "_id",
+              as: "modelDetails"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+
+// 1️⃣ Fetch Brands
+const brandsPayload = {
+  lookups: [
+    {
+      db: "caryanams",
+      data: [
+        {
+          table: "newbrand",
+          query: {}, // fetch all brands
+          projection: {
+            _id: 0,
+            brandId: "$_id",
+            brandname: "$sectionData.newBrand.brandname"
+          },
+          label: "BrandList",
+          type: "array",
+          lookup: []
+        }
+      ]
+    }
+  ]
+};
+
+// 2️⃣ Fetch Models by brand
+const modelsPayload = (brandId) => ({
+  lookups: [
+    {
+      db: "caryanams",
+      data: [
+        {
+          table: "model",
+          query: { "sectionData.model.companyId": brandId }, // filter by brand
+          projection: {
+            _id: 0,
+            modelId: "$_id",
+            name: "$sectionData.model.name"
+          },
+          label: "modelList",
+          type: "array",
+          lookup: []
+        }
+      ]
+    }
+  ]
+});
+
+// 3️⃣ Fetch Variants by model
+const variantsPayload = (modelId) => ({
+  lookups: [
+    {
+      db: "caryanams",
+      data: [
+        {
+          table: "variant",
+          query: { "sectionData.variant.model": modelId }, // filter by model
+          projection: {
+            _id: 0,
+            variantId: "$_id",
+            variantname: "$sectionData.variant.name"
+          },
+          label: "variantList",
+          type: "array",
+          lookup: []
+        }
+      ]
+    }
+  ]
+});
+
+
+// Fetch all brands
+const fetchBrands = async () => {
+  try {
+    const response = await api.post('v2/dynamic/process', brandsPayload);
+    console.log('Brands Response:', response); 
+    // adjust path depending on API response
+    setBrands(response.BrandList || response.lookups?.[0]?.data?.[0]?.BrandList || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// Fetch models by selected brand
+const fetchModels = async (brandId) => {
+  try {
+    const response = await api.post('v2/dynamic/process', modelsPayload(brandId));
+    console.log('Models Response:', response); 
+    setModels(response.modelList || response.lookups?.[0]?.data?.[0]?.modelList || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// Fetch variants by selected model
+const fetchVariants = async (modelId) => {
+  try {
+    const response = await api.post('v2/dynamic/process', variantsPayload(modelId));
+    console.log('Variants Response:', response); 
+    setVariants(response.variantList || response.lookups?.[0]?.data?.[0]?.variantList || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+useEffect(() => {
+  // fetchBrands();  
+}, []);
+
+
+
+
+
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const data = await api.post('v2/dynamic/process', Payload);
+  //       console.log('Fetched data:', data);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, []);
+
+// Details Field Api  Over
+
+
+
+  // Fetch And Log Token
+  const [Token, setToken] = useState(null);
+
+  const printToken = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        console.log('Fetched token:', token);
+        setToken(token);
+      } else {
+        console.log('No token found');
+      }
+    } catch (error) {
+      console.log('Error fetching token:', error);
+    }
+  };
+  useEffect(() => {
+    printToken();
+  }, []);
+
+  const [openIndex, setOpenIndex] = useState(null);
   const [openStart, setOpenStart] = useState(false);
   const [openEnd, setOpenEnd] = useState(false);
-
   const [openService, setOpenService] = useState(false);
-
   const [dummyPhotos, setDummyPhotos] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
-
   const [AllPhotod, setsetAllPhotod] = useState([]);
   const [showFrontPicker, setShowFrontPicker] = useState(false);
 
   // Details
-  const [Brand, setBrand] = useState(null);
+  const [Brand, setBrand] = useState(null); 
   const [CarModal, setCarModal] = useState(null);
-  const [Variant, setVarient] = useState(null);
+  const [Variant, setVariant] = useState(null);
   const [Year, setYear] = useState(null);
-  const [Fuel, setFuel] = useState();
-  const [Transmission, setTransmission] = useState();
-  const [Owner, setOwner] = useState();
-  const [KmDrive, setKmDrive] = useState();
-  const [CarNumber, setCarNumber] = useState();
-  const [Insurance, setInsurance] = useState();
-  const [insuranceStartDate, setInsuranceStartDate] = useState(null);
-  const [insuranceEndDate, setInsuranceEndDate] = useState(null);
-  const [ChassicNumber, setChassicNumber] = useState(null);
-  const [lastServiceDate, setLastServiceDate] = useState(null);
+  const [Fuel, setFuel] = useState(''); 
+  const [Transmission, setTransmission] = useState('');
+  const [Owner, setOwner] = useState('');
+  const [KmDrive, setKmDrive] = useState('');
+  const [CarNumber, setCarNumber] = useState('');
+  const [Insurance, setInsurance] = useState('');
+  const [insuranceStartDate, setInsuranceStartDate] = useState('');
+  const [insuranceEndDate, setInsuranceEndDate] = useState('');
+  const [ChassicNumber, setChassicNumber] = useState('');
+  const [lastServiceDate, setLastServiceDate] = useState('');
   const [Accidental, setAccidental] = useState(null);
-  const [Key, setKey] = useState();
-  const [Description, setDescription] = useState();
+  const [Key, setKey] = useState('');
+  const [Description, setDescription] = useState('');
 
   // Location section
   const [State, setState] = useState(false);
@@ -73,6 +351,20 @@ const Dashboard = () => {
   // Review Details
   const [Name, setName] = useState(false);
   const [Mobile, setMobile] = useState(false);
+  
+  const [brands, setBrands] = useState([]);
+const [models, setModels] = useState([]);
+const [variants, setVariants] = useState([]);
+
+  // date Formate
+  const formatDate = date => {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // Dummy data for dropdowns
   const dummyOptions = [
@@ -116,73 +408,8 @@ const Dashboard = () => {
     { label: 'No', value: 'no' },
   ];
 
-  // Accordion toggle
-  const toggleAccordion = index => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  
 
-  const handleSubmit = () => {
-    // Array of all mandatory fields
-    const fields = [
-      { value: Brand, label: 'Brand' },
-      { value: Modal, label: 'Model' },
-      { value: Variant, label: 'Variant' },
-      { value: Year, label: 'Year' },
-      { value: Fuel, label: 'Fuel' },
-      { value: Transmission, label: 'Transmission' },
-      { value: Owner, label: 'Owner' },
-      { value: KmDrive, label: 'Kilometer' },
-      { value: CarNumber, label: 'Car Number' },
-      { value: Description, label: 'Description' },
-    ];
-
-    // Loop through fields and check if empty
-    for (let field of fields) {
-      if (
-        !field.value || // null/undefined
-        (typeof field.value === 'string' && !field.value.trim()) // empty string
-      ) {
-        Alert.alert('Wrong', `Please enter/select Mandatory (*)} Field!`);
-        return;
-      }
-    }
-
-    // All fields are require
-    Alert.alert('Success', 'Form submitted successfully!');
-    console.log(
-      'Brand >>',
-      Brand,
-      'Modal >>',
-      Modal,
-      'Varient >>',
-      Variant,
-      'Year >>',
-      Year,
-      'Fuel >>',
-      Fuel,
-      'Transmission >>',
-      Transmission,
-      'KmDrive >>',
-      KmDrive,
-      'Insurance >>',
-      Insurance,
-      'insuranceStartDate >>',
-      insuranceStartDate.toDateString(),
-      'insuranceEndDate >>',
-      insuranceEndDate.toDateString(),
-      'ChassicNumber >>',
-      ChassicNumber,
-      'lastServiceDate >>',
-      lastServiceDate.toDateString(),
-      'Accidental >>',
-      Accidental,
-      'Key >>',
-      Key,
-      'Description >>',
-      Description,
-    );
-  };
 
   const renderPhotoBox = ({ item }) => (
     <View style={styles.photoItem}>
@@ -199,6 +426,95 @@ const Dashboard = () => {
       </TouchableOpacity>
     </View>
   );
+  // const handleNext = () => {
+  //   const validation = validateStep(openIndex);
+
+  //   if (!validation.valid) {
+  //     Alert.alert('Error', validation.message);
+  //     return;
+  //   }
+
+  //   if (openIndex < 4) {
+  //     setOpenIndex(openIndex + 1);
+  //   }
+  // };
+
+  // const [isStepValid, setIsStepValid] = useState({
+  //   0: false, // Front Photo
+  //   1: false, // All Photos
+  //   2: false, // Details
+  //   3: false, // Location
+  //   4: false, // Review
+  // });
+
+  const validateStep = step => {
+    switch (step) {
+      case 0: // Front Photo
+        if (AllPhotod.length === 0) {
+          return {
+            valid: false,
+            message: 'Please add at least one front photo.',
+          };
+        }
+        return { valid: true };
+
+      case 1: // All Photos
+        if (dummyPhotos.length === 0) {
+          return {
+            valid: false,
+            message: 'Please add at least one photo in All Photos.',
+          };
+        }
+        return { valid: true };
+
+      case 2: // Details
+        if (
+          !Brand ||
+          !CarModal ||
+          !Variant ||
+          !Year ||
+          !Fuel ||
+          !Transmission ||
+          !Owner ||
+          !KmDrive ||
+          !CarNumber ||
+          !Description
+        ) {
+          return {
+            valid: false,
+            message: 'Please fill all mandatory fields in Details.',
+          };
+        }
+        return { valid: true };
+
+      case 3: // Location
+        if (!State || !City || !Area || !Rto) {
+          return {
+            valid: false,
+            message: 'Please fill all mandatory fields in Location.',
+          };
+        }
+        return { valid: true };
+
+      case 4: // Review
+        if (!Name || !Mobile) {
+          return {
+            valid: false,
+            message: 'Please fill all mandatory fields in Review section.',
+          };
+        }
+        return { valid: true };
+
+      default:
+        return { valid: true };
+    }
+  };
+  const toggleAccordion = index => {
+    if (openIndex !== null && openIndex !== index) {
+          }
+
+    setOpenIndex(openIndex === index ? null : index);
+  };
 
   return (
     <View style={styles.container}>
@@ -209,26 +525,28 @@ const Dashboard = () => {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
         style={{ paddingHorizontal: 12, marginTop: 12 }}
       >
         {/* font photo section */}
-        <View style={styles.accordionContainer}>
+        <SafeAreaView style={styles.accordionContainer}>
           <TouchableOpacity
             style={[
               styles.accordionHeader,
-              openIndex === 1 && styles.activeHeader,
+              openIndex === 0 && styles.activeHeader,
             ]}
-            onPress={() => toggleAccordion(1)}
+            onPress={() => toggleAccordion(0)}
           >
             <Text style={styles.accordionTitle}>Front Photo</Text>
             <Image
-              source={openIndex === 1 ? image.down : image.up_arrow}
+              source={openIndex === 0 ? image.down : image.up_arrow}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
 
-          {openIndex === 1 && (
+          {openIndex === 0 && (
             <View style={styles.accordionContent}>
               <FlatList
                 data={AllPhotod}
@@ -240,14 +558,16 @@ const Dashboard = () => {
                 ListFooterComponent={
                   <TouchableOpacity
                     style={styles.addPhotoBox}
-                    onPress={() => setShowFrontPicker(true)} // open bottom sheet
+                    onPress={() => setShowFrontPicker(true)}
                   >
-                    <Image
-                      source={image.camera_1}
-                      style={{ height: 30, width: 30 }}
-                      tintColor={colors.primary}
-                    />
-                    <Text style={styles.addPhotoText}>Add Photo</Text>
+                    <View style={styles.addPhotoContent}>
+                      <Image
+                        source={image.camera_1}
+                        style={{ height: 30, width: 30, marginBottom: 5 }}
+                        tintColor={colors.primary}
+                      />
+                      <Text style={styles.addPhotoText}>Add Photo</Text>
+                    </View>
                   </TouchableOpacity>
                 }
               />
@@ -285,7 +605,7 @@ const Dashboard = () => {
                               width: 300,
                               height: 300,
                               cropping: false,
-                              mediaType: 'photo', // ✅ only photo
+                              mediaType: 'photo', // only photo
                             });
                             const newPhoto = {
                               id: Date.now().toString(),
@@ -353,7 +673,11 @@ const Dashboard = () => {
 
               {/* Next Button */}
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
-                <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  style={styles.nextbtn}
+                  // onPress={handleNext}
+                >
                   <Text style={styles.text_Next}>Next</Text>
                   <Image
                     source={image.right}
@@ -364,27 +688,27 @@ const Dashboard = () => {
               </View>
             </View>
           )}
-        </View>
+        </SafeAreaView>
         {/*  Front Photo Section Over */}
 
         {/* Photos Section */}
-        <View style={styles.accordionContainer}>
+        <SafeAreaView style={styles.accordionContainer}>
           <TouchableOpacity
             style={[
               styles.accordionHeader,
-              openIndex === 0 && styles.activeHeader,
+              openIndex === 1 && styles.activeHeader,
             ]}
-            onPress={() => toggleAccordion(0)}
+            onPress={() => toggleAccordion(1)}
           >
             <Text style={styles.accordionTitle}>All Photos</Text>
             <Image
-              source={openIndex === 0 ? image.down : image.up_arrow}
+              source={openIndex === 1 ? image.down : image.up_arrow}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
 
-          {openIndex === 0 && (
+          {openIndex === 1 && (
             <View style={styles.accordionContent}>
               <FlatList
                 data={dummyPhotos}
@@ -509,7 +833,11 @@ const Dashboard = () => {
 
               {/* Next Button */}
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
-                <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  style={styles.nextbtn}
+                  // onPress={handleNext}
+                >
                   <Text style={styles.text_Next}>Next</Text>
                   <Image
                     source={image.right}
@@ -520,28 +848,28 @@ const Dashboard = () => {
               </View>
             </View>
           )}
-        </View>
+        </SafeAreaView>
         {/*  Photo Section Over */}
 
         {/* Details Section */}
-        <View style={styles.accordionContainer}>
+        <SafeAreaView style={styles.accordionContainer}>
           <TouchableOpacity
             style={[
               styles.accordionHeader,
-              openIndex === 1 && styles.activeHeader,
+              openIndex === 2 && styles.activeHeader,
             ]}
-            onPress={() => toggleAccordion(1)}
+            onPress={() => toggleAccordion(2)}
           >
             <Text style={styles.accordionTitle}>Details</Text>
             <Image
-              source={openIndex === 1 ? image.down : image.up_arrow}
+              source={openIndex === 2 ? image.down : image.up_arrow}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
-          {openIndex === 1 && (
+          {openIndex === 2 && (
             <View style={styles.accordionContent}>
-              <View>
+              {/* <View>
                 <Text style={{ color: 'red' }}>*</Text>
                 <Dropdown
                   style={styles.dropdown}
@@ -555,10 +883,78 @@ const Dashboard = () => {
                     console.log('Selected Brand', value);
                   }}
                 />
-              </View>
+              </View> */}
               <View>
                 <Text style={{ color: 'red' }}>*</Text>
-                <Dropdown
+                 <Dropdown
+          style={styles.dropdown}
+          data={brands} // ✅ Changed from dummyOptions
+          labelField="brandname" // ✅ brand label
+          valueField="brandId" // ✅ brand value
+          placeholder="Select Brand"
+          value={Brand}
+          onChange={async (value) => {
+            setBrand(value);
+            setCarModal(''); // reset model
+            setVariant(''); // reset variant
+            console.log('Selected Brand', value);
+
+            // ✅ Fetch models for selected brand
+            try {
+              const response = await api.post('v2/dynamic/process', modelsPayload(value));
+              setModels(response.modelList || []);
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+        />
+      </View>
+
+      {/* ---------- MODEL Dropdown ---------- */}
+      <View>
+        <Text style={{ color: 'red' }}>*</Text>
+        <Dropdown
+          style={styles.dropdown}
+          data={models} // ✅ Changed from dummyOptions
+          labelField="name"
+          valueField="modelId"
+          placeholder="Select Model"
+          value={CarModal}
+          onChange={async (value) => {
+            setCarModal(value);
+            setVariant(''); // reset variant
+            console.log('Selected Car model', value);
+
+            // ✅ Fetch variants for selected model
+            try {
+              const response = await api.post('v2/dynamic/process', variantsPayload(value));
+              setVariants(response.variantList || []);
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+          disabled={!Brand} // ✅ Disabled if no brand selected
+        />
+      </View>
+
+      {/* ---------- VARIANT Dropdown ---------- */}
+      <View>
+        <Text style={{ color: 'red' }}>*</Text>
+        <Dropdown
+          style={styles.dropdown}
+          data={variants} // ✅ Changed from dummyOptions
+          labelField="variantname"
+          valueField="variantId"
+          placeholder="Select Variant"
+          value={Variant}
+          onChange={(value) => {
+            setVariant(value);
+            console.log('Selected Variant', value);
+          }}
+          disabled={!CarModal} // ✅ Disabled if no model selected
+        />
+      </View>
+                {/* <Dropdown
                   style={styles.dropdown}
                   data={dummyOptions}
                   labelField="label"
@@ -581,11 +977,11 @@ const Dashboard = () => {
                   placeholder="Select Variant"
                   value={Variant}
                   onChange={value => {
-                    setVarient(value);
+                    setVariant(value);
                     console.log('Selected Variant', value);
                   }}
                 />
-              </View>
+              </View> */}
 
               <View>
                 <Text style={{ color: 'red' }}>*</Text>
@@ -646,9 +1042,12 @@ const Dashboard = () => {
               <View>
                 <Text style={{ color: 'red' }}>*</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { color: colors.black, fontFamily: fonts.medium },
+                  ]}
                   placeholder="KM Driven"
-                  placeholderTextColor={colors.black}
+                  placeholderTextColor={colors.darkgray}
                   value={KmDrive}
                   onChangeText={value => {
                     setKmDrive(value);
@@ -660,9 +1059,12 @@ const Dashboard = () => {
               <View>
                 <Text style={{ color: 'red' }}>*</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { color: colors.black, fontFamily: fonts.medium },
+                  ]}
                   placeholder="Car Number"
-                  placeholderTextColor={colors.black}
+                  placeholderTextColor={colors.darkgray}
                   value={CarNumber}
                   onChangeText={value => {
                     setCarNumber(value);
@@ -708,8 +1110,9 @@ const Dashboard = () => {
                   </Text>
                   <Image
                     source={image.down}
-                    style={{ height: 18, width: 18 }}
+                    style={styles.downArrow}
                     resizeMode="contain"
+                    tintColor={colors.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -751,8 +1154,9 @@ const Dashboard = () => {
                   </Text>
                   <Image
                     source={image.down}
-                    style={{ height: 18, width: 18 }}
+                    style={styles.downArrow}
                     resizeMode="contain"
+                    tintColor={colors.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -774,9 +1178,12 @@ const Dashboard = () => {
               />
 
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  { color: colors.black, fontFamily: fonts.medium },
+                ]}
                 placeholder="Chassis Number"
-                placeholderTextColor={colors.black}
+                placeholderTextColor={colors.darkgray}
                 value={ChassicNumber}
                 onChangeText={value => {
                   setChassicNumber(value);
@@ -805,8 +1212,9 @@ const Dashboard = () => {
                   </Text>
                   <Image
                     source={image.down}
-                    style={{ height: 18, width: 18 }}
+                    style={styles.downArrow}
                     resizeMode="contain"
+                    tintColor={colors.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -850,7 +1258,7 @@ const Dashboard = () => {
                 }}
               />
 
-              <View>
+              <View style={{ marginBottom: 5 }}>
                 <Text style={{ color: 'red' }}>*</Text>
 
                 <TextInput
@@ -860,10 +1268,12 @@ const Dashboard = () => {
                       paddingVertical: 10,
                       height: 100,
                       textAlignVertical: 'top',
+                      color: colors.black,
+                      fontFamily: fonts.medium,
                     },
                   ]}
                   placeholder="Description"
-                  placeholderTextColor={colors.black}
+                  placeholderTextColor={colors.darkgray}
                   value={Description}
                   onChangeText={value => {
                     setDescription(value);
@@ -876,7 +1286,8 @@ const Dashboard = () => {
                 <TouchableOpacity
                   activeOpacity={0.6}
                   style={styles.nextbtn}
-                  onPress={handleSubmit}
+                  // onPress={handleSubmit}
+                  onPress={apiData}
                 >
                   <Text style={styles.text_Next}>Next</Text>
                   <Image
@@ -888,26 +1299,26 @@ const Dashboard = () => {
               </View>
             </View>
           )}
-        </View>
+        </SafeAreaView>
         {/* Details Section Over */}
 
         {/* Location Section */}
-        <View style={styles.accordionContainer}>
+        <SafeAreaView style={styles.accordionContainer}>
           <TouchableOpacity
             style={[
               styles.accordionHeader,
-              openIndex === 2 && styles.activeHeader,
+              openIndex === 3 && styles.activeHeader,
             ]}
-            onPress={() => toggleAccordion(2)}
+            onPress={() => toggleAccordion(3)}
           >
             <Text style={styles.accordionTitle}>Location</Text>
             <Image
-              source={openIndex === 2 ? image.down : image.up_arrow}
+              source={openIndex === 3 ? image.down : image.up_arrow}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
-          {openIndex === 2 && (
+          {openIndex === 3 && (
             <View style={styles.accordionContent}>
               <Dropdown
                 style={styles.dropdown}
@@ -959,7 +1370,11 @@ const Dashboard = () => {
               />
 
               <View style={{ marginTop: 10, alignSelf: 'flex-end' }}>
-                <TouchableOpacity activeOpacity={0.6} style={styles.nextbtn}>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  style={styles.nextbtn}
+                  // onPress={handleNext}
+                >
                   <Text style={styles.text_Next}>Next</Text>
                   <Image
                     source={image.right}
@@ -970,26 +1385,26 @@ const Dashboard = () => {
               </View>
             </View>
           )}
-        </View>
+        </SafeAreaView>
         {/* Location Section Over */}
 
         {/* Review Details Section */}
-        <View style={styles.accordionContainer}>
+        <SafeAreaView style={styles.accordionContainer}>
           <TouchableOpacity
             style={[
               styles.accordionHeader,
-              openIndex === 3 && styles.activeHeader,
+              openIndex === 4 && styles.activeHeader,
             ]}
-            onPress={() => toggleAccordion(3)}
+            onPress={() => toggleAccordion(4)}
           >
             <Text style={styles.accordionTitle}>Review Your Details</Text>
             <Image
-              source={openIndex === 3 ? image.down : image.up_arrow}
+              source={openIndex === 4 ? image.down : image.up_arrow}
               style={{ height: 18, width: 18 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
-          {openIndex === 3 && (
+          {openIndex === 4 && (
             <View style={styles.accordionContent}>
               <Text style={styles.heading}>Let's verify your account</Text>
               <View style={styles.avatarContainer}>
@@ -999,7 +1414,15 @@ const Dashboard = () => {
                   resizeMode="contain"
                 />
                 <TextInput
-                  style={[styles.input, { flex: 1, marginLeft: 10 }]}
+                  style={[
+                    styles.input,
+                    {
+                      flex: 1,
+                      marginLeft: 10,
+                      color: colors.black,
+                      fontFamily: fonts.medium,
+                    },
+                  ]}
                   placeholder="Name"
                   value={Name}
                   onChangeText={value => {
@@ -1009,7 +1432,14 @@ const Dashboard = () => {
                 />
               </View>
               <TextInput
-                style={[styles.input, { marginTop: 10 }]}
+                style={[
+                  styles.input,
+                  {
+                    marginTop: 10,
+                    color: colors.black,
+                    fontFamily: fonts.medium,
+                  },
+                ]}
                 placeholder="Mobile Phone Number"
                 keyboardType="phone-pad"
                 value={Mobile}
@@ -1031,7 +1461,7 @@ const Dashboard = () => {
               </View>
             </View>
           )}
-        </View>
+        </SafeAreaView>
         {/* Review Details Section over */}
       </ScrollView>
     </View>
@@ -1098,7 +1528,7 @@ const styles = StyleSheet.create({
   photoItem: {
     width: 70,
     height: 70,
-    margin: 5,
+    margin: 3,
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
@@ -1122,14 +1552,19 @@ const styles = StyleSheet.create({
     margin: 5,
     borderWidth: 1,
     borderColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
     borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center', // centers the child view
+  },
+  addPhotoContent: {
+    justifyContent: 'center',
+    alignItems: 'center', // centers Image and Text inside
   },
   addPhotoText: {
     fontSize: 12,
     color: colors.black,
     fontFamily: fonts.medium,
+    textAlign: 'center', // ensures text is centered horizontally
   },
   dropdown: {
     borderWidth: 1,
@@ -1232,5 +1667,10 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: '#ccc',
+  },
+  downArrow: {
+    height: 10,
+    width: 10,
+    marginRight: 5,
   },
 });

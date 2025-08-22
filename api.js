@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'https://crmapi.conscor.com/api/';
 
@@ -11,27 +12,24 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
-    // If you store token in AsyncStorage after login
-    // import AsyncStorage and use it like this:
-    // const token = await AsyncStorage.getItem('token');
-
-    const token = null; 
+    const token = await AsyncStorage.getItem('userToken'); 
+    console.log("Using Token:", token);
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`; 
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
-
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      console.log("Unauthorized! Redirect to login.");
+      console.log('Unauthorized! Redirect to login.');
     }
     return Promise.reject(error);
   }
 );
 
 export default api;
+

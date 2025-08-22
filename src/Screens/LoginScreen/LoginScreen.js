@@ -54,8 +54,9 @@ export const LoginScreen = ({ navigation }) => {
       });
 
       console.log('Login Success:', response);
+      console.log('>>>>>>:', response.accessToken);
 
-      await AsyncStorage.setItem('userToken', response.data?.token || 'dummyToken');
+      await AsyncStorage.setItem('userToken', response.accessToken || '');
       await AsyncStorage.setItem('username', name);
 
       navigation.replace('Dashboard');
