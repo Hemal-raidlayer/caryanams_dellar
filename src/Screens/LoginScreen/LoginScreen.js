@@ -5,23 +5,22 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-  Modal,
-  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../api';
+import LoaderService from '../../Component/LoaderServices';
+import CoustomToast from '../../Component/CoustomToast';
+import Strings from '../../constants/strings';
 
 export const LoginScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
-  const [loading, setLoading] = useState(true); // Loader while checking token
-  const [loginLoading, setLoginLoading] = useState(false); // Loader while login API call
 
   useEffect(() => {
     const checkLogin = async () => {
       try {
+        LoaderService.show();
         const userToken = await AsyncStorage.getItem('userToken');
         const savedName = await AsyncStorage.getItem('username');
 
@@ -31,7 +30,7 @@ export const LoginScreen = ({ navigation }) => {
       } catch (err) {
         console.log('Error reading storage:', err);
       } finally {
-        setLoading(false);
+        LoaderService.hide(); // hide loader
       }
     };
 
@@ -40,11 +39,12 @@ export const LoginScreen = ({ navigation }) => {
 
   const login = async () => {
     if (!name || !password) {
-      Alert.alert('Wrong', 'Please enter both username and password');
+      CoustomToast('error', 'Wrong', 'Please enter both username and password');
       return;
     }
 
-    setLoginLoading(true);
+    // setLoginLoading(true);\
+    LoaderService.show();
 
     try {
       const response = await api.post('v2/auth/login/password', {
@@ -63,32 +63,19 @@ export const LoginScreen = ({ navigation }) => {
     } catch (error) {
       console.log('Login Error:', error);
       setTimeout(() => {
-        Alert.alert('Wrong', 'Invalid Username And Password');
+        CoustomToast('error', 'Wrong', 'Invalid Username And Password');
       }, 100);
     } finally {
-      setLoginLoading(false);
+      LoaderService.hide(); // hide loader
     }
   };
 
-  if (loading) {
-    // Show loader while checking token
-    return (
-      <Modal transparent animationType="fade" visible={true}>
-        <View style={styles.modalBackground}>
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#4A90E2" />
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>{Strings.loginTitle}</Text>
 
       <TextInput
-        placeholder="Username"
+        placeholder={Strings.emailPlaceholder}
         style={styles.input}
         value={name}
         onChangeText={setName}
@@ -97,7 +84,7 @@ export const LoginScreen = ({ navigation }) => {
 
       <View style={styles.passwordBox}>
         <TextInput
-          placeholder="Password"
+          placeholder={Strings.passwordPlaceholder}
           secureTextEntry={secureText}
           style={styles.passwordInput}
           value={password}
@@ -107,30 +94,15 @@ export const LoginScreen = ({ navigation }) => {
           onPress={() => setSecureText(!secureText)}
           style={styles.showHideButton}
         >
-          <Text style={styles.showHideText}>{secureText ? 'Show' : 'Hide'}</Text>
+          <Text style={styles.showHideText}>
+            {secureText ? Strings.showPassword : Strings.hidePassword}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={login}
-        disabled={loginLoading}
-      >
-        {loginLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Submit</Text>
-        )}
+      <TouchableOpacity style={styles.button} onPress={login}>
+        <Text style={styles.buttonText}>{Strings.loginButton}</Text>
       </TouchableOpacity>
-
-      {/* Loader Modal during login API call */}
-      <Modal transparent visible={loginLoading} animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#4A90E2" />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
